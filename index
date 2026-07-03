@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision-Making Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Georgia&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & base ─────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B2A4A;--navy-mid:#2A3E64;--navy-lt:#3B5080;
+  --teal:#0F766E;--teal-lt:#14B8A6;--teal-pale:#CCFBF1;
+  --amber:#92400E;--amber-lt:#FEF3C7;
+  --red:#7F1D1D;--red-lt:#FEE2E2;
+  --green:#065F46;--green-lt:#D1FAE5;
+  --gray-50:#F8FAFC;--gray-100:#F1F5F9;--gray-200:#E2E8F0;
+  --gray-400:#94A3B8;--gray-600:#475569;--gray-800:#1E293B;
+  --white:#FFFFFF;
+  --radius:8px;--radius-lg:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.05);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.12),0 8px 32px rgba(0,0,0,.08);
+  --font-ui:'Inter',system-ui,sans-serif;
+  --font-task:'Georgia',serif;
+  --transition:all .22s cubic-bezier(.4,0,.2,1);
+}
+html{font-family:var(--font-ui);color:var(--gray-800);background:var(--gray-50);scroll-behavior:smooth}
+body{min-height:100vh;display:flex;flex-direction:column}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.app{display:grid;grid-template-columns:1fr 280px;grid-template-rows:56px 1fr;min-height:100vh;max-width:1200px;margin:0 auto;gap:0}
+.topbar{grid-column:1/-1;background:var(--navy);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:13px;font-weight:600;color:var(--white);letter-spacing:.04em}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.2)}
+.topbar-title{font-size:12px;color:rgba(255,255,255,.6);flex:1}
+.topbar-phase{font-size:11px;font-weight:500;color:var(--teal-lt);background:rgba(15,118,110,.2);padding:3px 10px;border-radius:20px}
+
+/* ── Sidebar panel ────────────────────────────────────────────────────────── */
+.sidebar{background:var(--navy);padding:20px 16px;display:flex;flex-direction:column;gap:16px;border-left:1px solid rgba(255,255,255,.08)}
+.sidebar-section{background:rgba(255,255,255,.06);border-radius:var(--radius);padding:12px 14px}
+.sidebar-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px}
+.arm-badge{font-size:13px;font-weight:600;color:var(--white);padding:6px 12px;border-radius:6px;text-align:center;background:var(--navy-mid)}
+.arm-badge.arm-control{background:rgba(71,85,105,.5);color:#94A3B8}
+.arm-badge.arm-search{background:rgba(234,179,8,.15);color:#FCD34D}
+.arm-badge.arm-genai{background:rgba(15,118,110,.3);color:var(--teal-lt)}
+
+.progress-phases{display:flex;flex-direction:column;gap:4px}
+.phase-dot{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.35);padding:4px 0}
+.phase-dot.done{color:var(--teal-lt)}
+.phase-dot.active{color:var(--white);font-weight:500}
+.phase-dot .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
+.phase-dot.done .dot{background:var(--teal-lt)}
+.phase-dot.active .dot{background:var(--white);box-shadow:0 0 0 3px rgba(255,255,255,.15)}
+
+.score-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.score-val{font-size:22px;font-weight:600;color:var(--white)}
+.score-sub{font-size:11px;color:rgba(255,255,255,.4)}
+.score-bar{height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.score-fill{height:100%;background:var(--teal-lt);border-radius:2px;transition:width .5s ease}
+
+.payout-row{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.5);margin-bottom:3px}
+.payout-row span:last-child{color:var(--white);font-weight:500}
+.payout-total{display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:var(--teal-lt);padding-top:8px;border-top:1px solid rgba(255,255,255,.1);margin-top:6px}
+
+/* ── Main content ─────────────────────────────────────────────────────────── */
+.main{padding:32px 32px 60px;overflow-y:auto;background:var(--gray-50)}
+
+.phase{display:none;animation:fadeIn .3s ease}
+.phase.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── Typography ───────────────────────────────────────────────────────────── */
+.page-eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+.page-title{font-size:26px;font-weight:600;color:var(--navy);line-height:1.25;margin-bottom:6px}
+.page-sub{font-size:14px;color:var(--gray-600);line-height:1.6;margin-bottom:28px;max-width:600px}
+.section-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--gray-200)}
+.field-label{font-size:13px;font-weight:500;color:var(--gray-800);margin-bottom:6px;display:block}
+.field-note{font-size:12px;color:var(--gray-400);margin-top:4px}
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card-sm{padding:14px 18px;margin-bottom:10px}
+.info-box{background:var(--amber-lt);border-left:3px solid var(--amber);border-radius:0 var(--radius) var(--radius) 0;padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--amber);line-height:1.6}
+.info-box.green{background:var(--green-lt);border-color:var(--green);color:var(--green)}
+.info-box.navy{background:#EFF6FF;border-color:var(--navy);color:var(--navy)}
+.info-box.red{background:var(--red-lt);border-color:var(--red);color:var(--red)}
+.info-box strong{font-weight:600}
+
+/* ── Form controls ────────────────────────────────────────────────────────── */
+.field{margin-bottom:18px}
+select,input[type=text],input[type=number],textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:var(--radius);
+  font-family:var(--font-ui);font-size:13px;color:var(--gray-800);background:var(--white);
+  transition:var(--transition);outline:none}
+select:focus,input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,118,110,.1)}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+
+.radio-group,.checkbox-group{display:flex;flex-direction:column;gap:8px}
+.radio-item,.checkbox-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border:1px solid var(--gray-200);border-radius:var(--radius);cursor:pointer;transition:var(--transition);font-size:13px;background:var(--white)}
+.radio-item:hover,.checkbox-item:hover{border-color:var(--teal);background:#F0FDFA}
+.radio-item input,.checkbox-item input{accent-color:var(--teal);width:16px;height:16px;flex-shrink:0}
+.radio-item.selected,.checkbox-item.selected{border-color:var(--teal);background:var(--teal-pale);font-weight:500}
+
+/* ── Likert scale ─────────────────────────────────────────────────────────── */
+.likert{margin:8px 0 4px}
+.likert-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--gray-400);margin-bottom:6px}
+.likert-points{display:flex;gap:6px}
+.likert-btn{flex:1;padding:8px 4px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer;text-align:center;font-size:13px;font-weight:500;color:var(--gray-600);background:var(--white);transition:var(--transition);font-family:var(--font-ui)}
+.likert-btn:hover{border-color:var(--teal);color:var(--teal)}
+.likert-btn.selected{background:var(--teal);border-color:var(--teal);color:var(--white)}
+
+/* ── Holt-Laury table ─────────────────────────────────────────────────────── */
+.hl-table{width:100%;border-collapse:collapse;font-size:13px}
+.hl-table th{background:var(--navy);color:var(--white);padding:10px 14px;text-align:left;font-weight:500;font-size:12px}
+.hl-table td{padding:9px 14px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+.hl-table tr:hover td{background:var(--gray-50)}
+.hl-table tr.switched td{background:var(--teal-pale)}
+.hl-option{display:flex;align-items:center;gap:8px;cursor:pointer}
+.hl-option input{accent-color:var(--teal);width:15px;height:15px}
+
+/* ── Gamble cards ─────────────────────────────────────────────────────────── */
+.gamble-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;box-shadow:var(--shadow)}
+.gamble-header{background:var(--navy);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.gamble-code{font-size:13px;font-weight:600;color:var(--white)}
+.gamble-type{font-size:11px;color:rgba(255,255,255,.5);font-style:italic}
+.gamble-body{padding:18px 20px}
+.gamble-prompt{font-family:var(--font-task);font-size:15px;color:var(--gray-800);line-height:1.75;margin-bottom:18px}
+.gamble-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.gamble-opt{border:2px solid var(--gray-200);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:var(--transition);background:var(--white);text-align:left;font-family:var(--font-task)}
+.gamble-opt:hover{border-color:var(--teal);background:var(--teal-pale)}
+.gamble-opt.selected{border-color:var(--teal);background:var(--teal-pale)}
+.gamble-opt.selected-b{border-color:var(--navy);background:#EFF6FF}
+.opt-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-400);margin-bottom:6px}
+.opt-text{font-size:14px;color:var(--gray-800);line-height:1.55}
+.opt-ev{font-size:11px;color:var(--gray-400);margin-top:6px}
+.gamble-confidence{padding:12px 20px;background:var(--gray-50);border-top:1px solid var(--gray-100)}
+.confidence-label{font-size:12px;color:var(--gray-600);margin-bottom:8px}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn-row{display:flex;gap:12px;margin-top:24px;justify-content:flex-end}
+.btn{padding:10px 22px;border-radius:var(--radius);font-family:var(--font-ui);font-size:13px;font-weight:500;cursor:pointer;transition:var(--transition);border:none;outline:none}
+.btn-primary{background:var(--teal);color:var(--white)}
+.btn-primary:hover{background:var(--teal-lt);transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,118,110,.25)}
+.btn-secondary{background:var(--white);color:var(--gray-800);border:1px solid var(--gray-200)}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal)}
+.btn-navy{background:var(--navy);color:var(--white)}
+.btn-navy:hover{background:var(--navy-mid);transform:translateY(-1px)}
+.btn-lg{padding:13px 28px;font-size:14px;font-weight:600}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+/* ── Raven's matrix ───────────────────────────────────────────────────────── */
+.raven-grid{display:grid;gap:3px;margin:16px 0;background:var(--gray-800);padding:3px;border-radius:6px;width:fit-content}
+.raven-cell{width:48px;height:48px;background:var(--white);display:flex;align-items:center;justify-content:center;font-size:20px;border-radius:2px}
+.raven-cell.missing{background:var(--gray-100);font-size:24px;color:var(--gray-400)}
+.raven-choices{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.raven-choice{width:56px;height:56px;border:2px solid var(--gray-200);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;transition:var(--transition);background:var(--white)}
+.raven-choice:hover{border-color:var(--teal)}
+.raven-choice.selected{border-color:var(--teal);background:var(--teal-pale)}
+.raven-choice .choice-label{position:absolute;bottom:2px;right:4px;font-size:9px;color:var(--gray-400)}
+.raven-wrapper{position:relative}
+
+/* ── Payoff screen ────────────────────────────────────────────────────────── */
+.payoff-draw{background:var(--navy);color:var(--white);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;text-align:center}
+.payoff-dice{font-size:48px;animation:spin 1s ease forwards}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.payoff-task-result{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px 18px;margin-bottom:12px}
+.payoff-task-label{font-size:12px;color:var(--gray-400);margin-bottom:4px}
+.payoff-task-outcome{font-size:18px;font-weight:600;color:var(--navy)}
+.payoff-total-box{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);color:var(--white);border-radius:var(--radius-lg);padding:24px;text-align:center;margin:20px 0}
+.payoff-total-label{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:8px}
+.payoff-total-amount{font-size:42px;font-weight:700;color:var(--teal-lt)}
+
+/* ── Arm indicator ────────────────────────────────────────────────────────── */
+.arm-notice{padding:12px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.arm-notice.control{background:#F1F5F9;color:var(--gray-600);border:1px solid var(--gray-200)}
+.arm-notice.search{background:#FFFBEB;color:#B45309;border:1px solid #FCD34D}
+.arm-notice.genai{background:var(--teal-pale);color:var(--teal);border:1px solid #99F6E4}
+.arm-icon{font-size:18px}
+
+/* ── Utility ──────────────────────────────────────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mt-4{margin-top:16px}
+.mt-6{margin-top:24px}
+.mb-2{margin-bottom:8px}
+.text-sm{font-size:13px}
+.text-muted{color:var(--gray-400)}
+.divider{height:1px;background:var(--gray-200);margin:24px 0}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:var(--teal-pale);color:var(--teal)}
+.required{color:var(--red)}
+.error-msg{font-size:12px;color:var(--red);margin-top:4px;display:none}
+.field.has-error .error-msg{display:block}
+.field.has-error select,.field.has-error input{border-color:var(--red)}
+.validate-note{font-size:12px;color:var(--red);background:var(--red-lt);padding:10px 14px;border-radius:var(--radius);margin-top:12px;display:none}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:3px}
+
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;grid-template-rows:56px 1fr}
+  .sidebar{display:none}
+  .main{padding:20px 16px 40px}
+  .gamble-options{grid-template-columns:1fr}
+  .grid-2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Top bar -->
+<header class="topbar">
+  <span class="topbar-logo">RESEARCH LAB</span>
+  <div class="topbar-sep"></div>
+  <span class="topbar-title">Decision-Making & Technology Study</span>
+  <span class="topbar-phase" id="topPhaseLabel">Phase 1 of 8</span>
+</header>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Session</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px">Participant ID</div>
+    <div style="font-size:14px;font-weight:600;color:#fff;letter-spacing:.05em" id="sidePID">—</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Assigned Condition</div>
+    <div class="arm-badge" id="sideArm">Not assigned</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Progress</div>
+    <div class="progress-phases" id="sidePhases"></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Decision Tasks</div>
+    <div class="score-row">
+      <span class="score-val" id="sideDQS">0 / 8</span>
+      <span class="score-sub">DQS</span>
+    </div>
+    <div class="score-bar"><div class="score-fill" id="sideDQSBar" style="width:0%"></div></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Estimated Payout</div>
+    <div class="payout-row"><span>Show-up fee</span><span>₹200</span></div>
+    <div class="payout-row"><span>Battery A (exp.)</span><span id="sidePayA">₹—</span></div>
+    <div class="payout-row"><span>Battery B (exp.)</span><span id="sidePayB">₹—</span></div>
+    <div class="payout-total"><span>Total (exp.)</span><span id="sidePayTotal">₹200</span></div>
+  </div>
+</aside>
+
+<!-- Main content -->
+<main class="main" id="mainContent">
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 0 — Welcome & Consent
+══════════════════════════════════════════════════════════════ -->
+<section class="phase active" id="phase0">
+  <div class="page-eyebrow">Study Introduction</div>
+  <div class="page-title">Welcome to the Decision-Making Study</div>
+  <div class="page-sub">Behavioral Economics Research · Decision-Making Under Uncertainty</div>
+
+  <div class="card">
+    <div class="section-title">About This Study</div>
+    <p class="text-sm" style="line-height:1.8;color:var(--gray-600);margin-bottom:12px">
+      This study examines how people make decisions under uncertainty, and whether access to digital information tools changes the quality of those decisions. You will complete a series of background questions and decision problems. <strong>Your responses are completely anonymous</strong> — they are linked only to a random participant ID, never to your name.
+    </p>
+    <p class="text-sm" style="line-height:1.8;color:var(--gray-600);margin-bottom:12px">
+      <strong>Important:</strong> At the end of the session, two of your decision problems will be randomly selected and played out for real money. You will receive the actual monetary outcome in cash. Please treat every decision as if it will be the one that counts.
+    </p>
+    <div class="info-box">
+      <strong>Estimated time:</strong> 60–75 minutes. You will be paid a guaranteed show-up fee of <strong>₹200</strong>, plus additional earnings from the randomly selected decision tasks (expected ₹400–₹600 additional).
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Informed Consent</div>
+    <p class="text-sm" style="line-height:1.8;color:var(--gray-600);margin-bottom:16px">
+      By proceeding, you confirm that: (1) you are participating voluntarily and may withdraw at any time without penalty; (2) your responses will be stored anonymously and used only for academic research; (3) you understand the payment structure described above; (4) you are 18 years of age or older.
+    </p>
+    <div class="field">
+      <div class="radio-group">
+        <label class="radio-item" id="consentYes">
+          <input type="radio" name="consent" value="yes" onchange="handleConsent('yes')">
+          <span>Yes, I have read and understood the above. I consent to participate.</span>
+        </label>
+        <label class="radio-item" id="consentNo">
+          <input type="radio" name="consent" value="no" onchange="handleConsent('no')">
+          <span>No, I do not wish to participate.</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary btn-lg" id="btn0" disabled onclick="goPhase(1)">Begin Study →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 1 — Demographics
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase1">
+  <div class="page-eyebrow">Section 1 of 6 — Baseline</div>
+  <div class="page-title">Background Information</div>
+  <div class="page-sub">These questions help us understand the study sample. All responses are anonymous.</div>
+
+  <div class="card">
+    <div class="section-title">Demographics</div>
+    <div class="grid-2">
+      <div class="field" id="f-age">
+        <label class="field-label">Age <span class="required">*</span></label>
+        <select id="d-age" onchange="checkField('f-age','d-age')">
+          <option value="">Select age range</option>
+          <option>18–21</option><option>22–25</option><option>26–30</option>
+          <option>31–35</option><option>36–40</option><option>41–45</option><option>46–50</option>
+        </select>
+        <span class="error-msg">Please select your age range.</span>
+      </div>
+      <div class="field" id="f-gender">
+        <label class="field-label">Gender <span class="required">*</span></label>
+        <select id="d-gender" onchange="checkField('f-gender','d-gender')">
+          <option value="">Select</option>
+          <option>Male</option><option>Female</option><option>Non-binary / other</option><option>Prefer not to say</option>
+        </select>
+        <span class="error-msg">Please select an option.</span>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field" id="f-edu">
+        <label class="field-label">Highest education completed <span class="required">*</span></label>
+        <select id="d-edu" onchange="checkField('f-edu','d-edu')">
+          <option value="">Select</option>
+          <option>Secondary (Class 10)</option><option>Higher Secondary (Class 12)</option>
+          <option>Bachelor's degree</option><option>Postgraduate degree</option>
+          <option>Doctoral degree</option><option>Other</option>
+        </select>
+        <span class="error-msg">Required.</span>
+      </div>
+      <div class="field" id="f-income">
+        <label class="field-label">Household monthly income <span class="required">*</span></label>
+        <select id="d-income" onchange="checkField('f-income','d-income')">
+          <option value="">Select range</option>
+          <option>Below ₹15,000</option><option>₹15,000–₹30,000</option>
+          <option>₹30,001–₹60,000</option><option>₹60,001–₹1,00,000</option>
+          <option>Above ₹1,00,000</option><option>Prefer not to say</option>
+        </select>
+        <span class="error-msg">Required.</span>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field" id="f-phone">
+        <label class="field-label">Years of smartphone ownership <span class="required">*</span></label>
+        <select id="d-phone" onchange="checkField('f-phone','d-phone')">
+          <option value="">Select</option>
+          <option>Less than 1 year</option><option>1–3 years</option>
+          <option>4–6 years</option><option>7–10 years</option><option>More than 10 years</option>
+        </select>
+        <span class="error-msg">Required.</span>
+      </div>
+      <div class="field" id="f-aiuse">
+        <label class="field-label">Daily AI tool usage (ChatGPT, Gemini, etc.) <span class="required">*</span></label>
+        <select id="d-aiuse" onchange="checkField('f-aiuse','d-aiuse')">
+          <option value="">Select</option>
+          <option>0 hours</option><option>Less than 30 minutes</option>
+          <option>30 min – 1 hour</option><option>1–2 hours</option><option>More than 2 hours</option>
+        </select>
+        <span class="error-msg">Required.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="validate-note" id="val1">Please complete all required fields before proceeding.</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goPhase(0)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(1,2)">Continue →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 2 — Algorithm Trust + Numeracy + Digital Literacy
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase2">
+  <div class="page-eyebrow">Section 2 of 6 — Baseline Scales</div>
+  <div class="page-title">Attitudes and Abilities</div>
+  <div class="page-sub">Please read each statement carefully. There are no right or wrong answers — we want your honest opinion.</div>
+
+  <!-- Algorithm Trust Scale -->
+  <div class="card">
+    <div class="section-title">Part A — Attitudes Toward AI Tools <span class="tag">Algorithm Trust Scale</span></div>
+    <div class="info-box navy"><strong>Instructions:</strong> Rate your agreement with each statement on the 1–7 scale (1 = Strongly disagree, 7 = Strongly agree).</div>
+
+    <div id="atItems"></div>
+  </div>
+
+  <!-- Berlin Numeracy Test -->
+  <div class="card">
+    <div class="section-title">Part B — Numerical Reasoning <span class="tag">Berlin Numeracy Test</span></div>
+    <div class="info-box navy"><strong>Instructions:</strong> Answer each question as accurately as you can. You may use the scratch paper provided. Take your time.</div>
+
+    <div class="field" id="f-n1">
+      <label class="field-label">N1. Imagine we are throwing a five-sided die 50 times. On average, how many times would you expect the die to show an even number? (Even numbers on a five-sided die are 2 and 4.) <span class="required">*</span></label>
+      <input type="number" id="n-n1" placeholder="Enter a number" min="0" max="50" onchange="checkField('f-n1','n-n1')">
+      <span class="error-msg">Please enter a number.</span>
+    </div>
+
+    <div class="field" id="f-n2">
+      <label class="field-label">N2. Out of 1,000 people in a small town, 500 are members of a choir. Out of these 500 choir members, 100 are men. Out of the 500 who are not choir members, 300 are men. What is the probability (%) that a randomly drawn male inhabitant is a choir member? <span class="required">*</span></label>
+      <input type="number" id="n-n2" placeholder="Enter percentage (0–100)" min="0" max="100" onchange="checkField('f-n2','n-n2')">
+      <span class="error-msg">Please enter a percentage.</span>
+    </div>
+
+    <div class="field" id="f-n3">
+      <label class="field-label">N3. Imagine a loaded six-sided die. The probability of rolling a 6 is twice as high as any other number. On average, how many times would you need to throw the die to get a 6? <span class="required">*</span></label>
+      <input type="number" id="n-n3" placeholder="Enter a number" min="0" step="0.5" onchange="checkField('f-n3','n-n3')">
+      <span class="error-msg">Please enter a number.</span>
+    </div>
+
+    <div class="field" id="f-n4">
+      <label class="field-label">N4. In a forest, 20% of mushrooms are red, 50% are brown, and 30% are white. A red mushroom is poisonous with probability 20%. Brown and white mushrooms are never poisonous. If you pick a random mushroom, what is the probability (%) it is poisonous? <span class="required">*</span></label>
+      <input type="number" id="n-n4" placeholder="Enter percentage (0–100)" min="0" max="100" onchange="checkField('f-n4','n-n4')">
+      <span class="error-msg">Please enter a percentage.</span>
+    </div>
+  </div>
+
+  <!-- Digital Literacy -->
+  <div class="card">
+    <div class="section-title">Part C — Digital Literacy <span class="tag">10 items</span></div>
+    <div id="dlItems"></div>
+  </div>
+
+  <div class="validate-note" id="val2">Please complete all items before proceeding.</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goPhase(1)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(2,3)">Continue →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 3 — Raven's Matrices
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase3">
+  <div class="page-eyebrow">Section 3 of 6 — Cognitive Assessment</div>
+  <div class="page-title">Pattern Completion</div>
+  <div class="page-sub">For each pattern, select the piece that correctly completes it. You have <strong>10 minutes</strong> for this section.</div>
+
+  <div class="info-box"><strong>Timer:</strong> <span id="ravenTimer">10:00</span> remaining. The section will auto-submit when time expires.</div>
+
+  <div id="ravenItems"></div>
+
+  <div class="validate-note" id="val3">Please answer all pattern questions before proceeding.</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goPhase(2)">← Back</button>
+    <button class="btn btn-primary" id="ravenNext" onclick="validateAndGo(3,4)">Continue →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 4 — Holt-Laury MPL
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase4">
+  <div class="page-eyebrow">Section 4 of 6 — Risk Preferences</div>
+  <div class="page-title">Choice Task</div>
+  <div class="page-sub">In each row, choose ONE option — A (safer) or B (riskier). One row will be randomly selected at the end of the session and paid out in cash. Treat every row as if it counts.</div>
+
+  <div class="info-box green"><strong>Incentive-compatible:</strong> One randomly selected row will determine a real cash payment.</div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="hl-table" id="hlTable">
+      <thead>
+        <tr>
+          <th>Row</th>
+          <th>Option A (Safer)</th>
+          <th>Option B (Riskier)</th>
+          <th>Your Choice</th>
+        </tr>
+      </thead>
+      <tbody id="hlBody"></tbody>
+    </table>
+  </div>
+
+  <div class="validate-note" id="val4">Please make a choice for every row before proceeding.</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goPhase(3)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(4,5)">Continue →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 5 — Arm Assignment
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase5">
+  <div class="page-eyebrow">Section 5 of 6 — Condition Assignment</div>
+  <div class="page-title">Your Study Condition</div>
+  <div class="page-sub">You have been randomly assigned to one of three conditions for the decision tasks ahead.</div>
+
+  <div id="armInstructions"></div>
+
+  <div class="card">
+    <div class="section-title">What happens next</div>
+    <p class="text-sm" style="line-height:1.8;color:var(--gray-600)">
+      You will now complete <strong>10 decision problems</strong> organized in two batteries. For each problem, carefully read the scenario and choose between Option A and Option B. After each choice, rate your confidence on a 1–7 scale.<br><br>
+      Remember: <strong>one problem from Battery A and one from Battery B</strong> will be randomly selected at the end and played out for real money.
+    </p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary btn-lg" onclick="goPhase(6)">Start Battery A →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 6 — Battery A
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase6">
+  <div class="page-eyebrow">Battery A — Canonical Decision Tasks</div>
+  <div class="page-title">Decision Problems — Set A</div>
+  <div class="page-sub">Read each problem carefully. Choose one option and rate your confidence. All payoffs are in Indian Rupees (₹).</div>
+
+  <div id="armReminderA" class="arm-notice"></div>
+  <div id="batteryA"></div>
+
+  <div class="validate-note" id="val6">Please answer all problems and confidence ratings before proceeding.</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goPhase(5)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(6,7)">Continue to Battery B →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 7 — Battery B
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase7">
+  <div class="page-eyebrow">Battery B — Extended Reasoning Tasks</div>
+  <div class="page-title">Decision Problems — Set B</div>
+  <div class="page-sub">These problems involve probability and statistical reasoning. Take your time.</div>
+
+  <div id="armReminderB" class="arm-notice"></div>
+  <div id="batteryB"></div>
+
+  <div class="validate-note" id="val7">Please answer all problems and confidence ratings before proceeding.</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goPhase(6)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(7,8)">Continue to Process Measures →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 8 — Process Measures
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase8">
+  <div class="page-eyebrow">Section 6 of 6 — Final Questions</div>
+  <div class="page-title">Reflection and Process</div>
+  <div class="page-sub">A few final questions about how you made your decisions today.</div>
+
+  <div class="card">
+    <div class="section-title">Stated Reasoning</div>
+    <div class="field" id="f-pr1">
+      <label class="field-label">PR1. Looking back at your decisions overall, which best describes how you made your choices? <span class="required">*</span></label>
+      <div class="radio-group" id="pr1-group">
+        <label class="radio-item"><input type="radio" name="pr1" value="a" onchange="selectRadio('pr1-group',this)"> (a) I tried to calculate the best expected outcome mathematically</label>
+        <label class="radio-item"><input type="radio" name="pr1" value="b" onchange="selectRadio('pr1-group',this)"> (b) I followed my gut feeling or intuition</label>
+        <label class="radio-item"><input type="radio" name="pr1" value="c" onchange="selectRadio('pr1-group',this)"> (c) I tried to avoid the riskier options regardless of expected outcome</label>
+        <label class="radio-item"><input type="radio" name="pr1" value="d" onchange="selectRadio('pr1-group',this)"> (d) It was too difficult to calculate, so I guessed</label>
+        <label class="radio-item"><input type="radio" name="pr1" value="e" onchange="selectRadio('pr1-group',this)"> (e) A combination of calculation and intuition</label>
+        <label class="radio-item"><input type="radio" name="pr1" value="f" onchange="selectRadio('pr1-group',this)"> (f) Other</label>
+      </div>
+      <span class="error-msg">Please select one option.</span>
+    </div>
+
+    <div class="field" id="f-pr2">
+      <label class="field-label">PR2. Compared to how you normally make financial decisions in real life, how similar was your approach today?</label>
+      <div class="likert" id="pr2-likert">
+        <div class="likert-labels"><span>Not at all similar</span><span>Exactly the same</span></div>
+        <div class="likert-points" id="pr2-pts"></div>
+      </div>
+    </div>
+
+    <div class="field" id="f-pr3">
+      <label class="field-label">PR3. How much did your decisions feel based on information you were confident about?</label>
+      <div class="likert" id="pr3-likert">
+        <div class="likert-labels"><span>Not at all confident</span><span>Completely confident</span></div>
+        <div class="likert-points" id="pr3-pts"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Query Log — only for GenAI arm -->
+  <div id="aqlSection" style="display:none">
+    <div class="card">
+      <div class="section-title">AI Tool Usage Log <span class="tag">GenAI Arm Only</span></div>
+      <div class="info-box green"><strong>Note:</strong> This section is only for participants who used AI tools. Please briefly describe how you used the AI for each decision task.</div>
+      <div id="aqlItems"></div>
+      <div class="field mt-4" id="f-aql-helpful">
+        <label class="field-label">Overall, how helpful was the AI tool in helping you make decisions?</label>
+        <div class="likert">
+          <div class="likert-labels"><span>Not helpful at all</span><span>Extremely helpful</span></div>
+          <div class="likert-points" id="aql-helpful-pts"></div>
+        </div>
+      </div>
+      <div class="field" id="f-aql-follow">
+        <label class="field-label">How much did you follow the AI tool's suggestions in your final choices?</label>
+        <div class="likert">
+          <div class="likert-labels"><span>Ignored it completely</span><span>Followed it exactly</span></div>
+          <div class="likert-points" id="aql-follow-pts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compliance check -->
+  <div class="card">
+    <div class="section-title">Honesty Check</div>
+    <div class="field" id="f-hc1">
+      <label class="field-label">HC1. Did you communicate with any other participant during the decision tasks? <span class="required">*</span></label>
+      <div class="radio-group" id="hc1-group">
+        <label class="radio-item"><input type="radio" name="hc1" value="no" onchange="selectRadio('hc1-group',this)"> No</label>
+        <label class="radio-item"><input type="radio" name="hc1" value="yes" onchange="selectRadio('hc1-group',this)"> Yes</label>
+      </div>
+      <span class="error-msg">Please select one.</span>
+    </div>
+    <div class="field" id="f-hc2">
+      <label class="field-label">HC2. Were you able to follow the technology instructions for your assigned condition? <span class="required">*</span></label>
+      <div class="radio-group" id="hc2-group">
+        <label class="radio-item"><input type="radio" name="hc2" value="yes" onchange="selectRadio('hc2-group',this)"> Yes, fully</label>
+        <label class="radio-item"><input type="radio" name="hc2" value="partial" onchange="selectRadio('hc2-group',this)"> Partially</label>
+        <label class="radio-item"><input type="radio" name="hc2" value="no" onchange="selectRadio('hc2-group',this)"> No</label>
+      </div>
+      <span class="error-msg">Please select one.</span>
+    </div>
+    <div class="field" id="f-hc3">
+      <label class="field-label">HC3. Which best describes your technology use during the decision tasks? <span class="required">*</span></label>
+      <div class="radio-group" id="hc3-group">
+        <label class="radio-item"><input type="radio" name="hc3" value="none" onchange="selectRadio('hc3-group',this)"> I did not use any technology</label>
+        <label class="radio-item"><input type="radio" name="hc3" value="search" onchange="selectRadio('hc3-group',this)"> I used only Google or other search engines</label>
+        <label class="radio-item"><input type="radio" name="hc3" value="genai" onchange="selectRadio('hc3-group',this)"> I used ChatGPT or another AI chatbot</label>
+        <label class="radio-item"><input type="radio" name="hc3" value="both" onchange="selectRadio('hc3-group',this)"> I used both search and AI chatbots</label>
+        <label class="radio-item"><input type="radio" name="hc3" value="unrelated" onchange="selectRadio('hc3-group',this)"> I used my device for something unrelated</label>
+      </div>
+      <span class="error-msg">Please select one.</span>
+    </div>
+  </div>
+
+  <div class="validate-note" id="val8">Please complete all required fields before proceeding.</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goPhase(7)">← Back</button>
+    <button class="btn btn-primary btn-lg" onclick="validateAndGo(8,9)">Calculate My Payoff →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PHASE 9 — Payoff + Debrief
+══════════════════════════════════════════════════════════════ -->
+<section class="phase" id="phase9">
+  <div class="page-eyebrow">Session Complete</div>
+  <div class="page-title">Your Results & Payment</div>
+  <div class="page-sub">Below are your randomly selected tasks and their outcomes.</div>
+
+  <div class="payoff-draw" id="payoffDraw">
+    <div class="payoff-dice" id="payoffDice">🎲</div>
+    <div style="margin-top:12px;font-size:15px;opacity:.7">Drawing your payment tasks...</div>
+  </div>
+
+  <div id="payoffResults" style="display:none">
+    <div id="payoffTaskA" class="payoff-task-result"></div>
+    <div id="payoffTaskB" class="payoff-task-result"></div>
+    <div class="payoff-total-box">
+      <div class="payoff-total-label">Total Payment</div>
+      <div class="payoff-total-amount" id="payoffTotal">₹—</div>
+      <div style="font-size:12px;opacity:.5;margin-top:8px">Show-up fee (₹200) + Task A outcome + Task B outcome</div>
+    </div>
+  </div>
+
+  <!-- DQS summary -->
+  <div class="card" id="dqsSummary" style="display:none">
+    <div class="section-title">Your Decision Quality Score</div>
+    <div style="display:flex;gap:24px;align-items:center">
+      <div style="text-align:center">
+        <div style="font-size:42px;font-weight:700;color:var(--navy)" id="finalDQS">—</div>
+        <div style="font-size:12px;color:var(--gray-400)">out of 8 tasks</div>
+      </div>
+      <div style="flex:1">
+        <div class="score-bar" style="height:8px;margin-bottom:8px"><div class="score-fill" id="finalDQSBar"></div></div>
+        <p class="text-sm" style="color:var(--gray-600);line-height:1.7" id="dqsMessage"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debrief -->
+  <div class="card" id="debriefCard" style="display:none">
+    <div class="section-title">Study Debrief</div>
+    <p class="text-sm" style="line-height:1.8;color:var(--gray-600);margin-bottom:12px">
+      Thank you for completing the session. This study is investigating whether access to AI tools — such as ChatGPT or Google Search — helps people make better decisions in situations involving probability and uncertainty.
+    </p>
+    <p class="text-sm" style="line-height:1.8;color:var(--gray-600);margin-bottom:12px">
+      The decision problems you faced were designed based on classic findings in behavioral economics, including <em>Prospect Theory</em> (Kahneman & Tversky, 1979). For example, many people prefer a certain ₹400 over a gamble with an expected value of ₹480 — this is called the <strong>certainty effect</strong>. The health programme questions tested whether framing choices as gains versus losses changes your decision — the <strong>framing effect</strong>.
+    </p>
+    <p class="text-sm" style="line-height:1.8;color:var(--gray-600);margin-bottom:12px">
+      Your responses are completely anonymous and will only be used for academic research. If you would like to receive a summary of the study findings once published, please provide your email address to the session administrator separately — it will be stored entirely apart from your responses.
+    </p>
+    <div class="info-box green"><strong>Publication:</strong> This study is being submitted for publication in an academic economics journal. We are grateful for your time and participation.</div>
+  </div>
+
+  <div id="finalBtns" style="display:none" class="btn-row">
+    <button class="btn btn-navy btn-lg" onclick="downloadData()">Download Session Data (JSON)</button>
+  </div>
+</section>
+
+</main><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════
+const S = {
+  pid: 'P' + Math.random().toString(36).substr(2,6).toUpperCase(),
+  arm: null,          // 'control' | 'search' | 'genai'
+  phase: 0,
+  ravenTimer: null,
+  ravenSec: 600,
+  atResponses: {},    // algorithm trust
+  dlResponses: {},    // digital literacy
+  ravenResponses: {},
+  hlChoices: {},      // holt-laury
+  batA: {},           // battery A choices + confidence
+  batB: {},           // battery B choices + confidence
+  b1prob: null,       // B1 probability estimate
+  pr: {},             // process measures
+  dqs: 0,
+  startTime: Date.now(),
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PHASE NAMES
+// ═══════════════════════════════════════════════════════════════════════════
+const PHASES = [
+  'Consent','Demographics','Scales & Numeracy',
+  'Pattern Tasks','Risk Preferences','Arm Assignment',
+  'Battery A','Battery B','Process Measures','Payoff & Debrief'
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  ALGORITHM TRUST ITEMS (8 items, AT4 & AT7 reversed)
+// ═══════════════════════════════════════════════════════════════════════════
+const AT_ITEMS = [
+  {id:'at1',text:'I feel comfortable relying on AI tools to help me answer questions I find difficult.',rev:false},
+  {id:'at2',text:'I believe AI tools calculate probabilities and expected values more accurately than I can.',rev:false},
+  {id:'at3',text:'When an AI tool gives me an answer, I usually follow it without checking further.',rev:false},
+  {id:'at4',text:'I am skeptical of recommendations made by AI systems and prefer to rely on my own judgment.',rev:true},
+  {id:'at5',text:'I think AI tools make better financial decisions than most people.',rev:false},
+  {id:'at6',text:'I would trust an AI tool\'s recommendation about an important financial choice over my own initial instinct.',rev:false},
+  {id:'at7',text:'I find it difficult to trust AI systems because I do not fully understand how they work.',rev:true},
+  {id:'at8',text:'If an AI tool and I disagreed about the best option, I would change my answer to match the AI.',rev:false},
+];
+
+// Digital Literacy items
+const DL_ITEMS = [
+  {id:'dl1',text:'How often do you use AI tools (e.g. ChatGPT, Gemini) for help with tasks or questions?',
+   opts:['Never','Rarely (few times/year)','Sometimes (few times/month)','Often (few times/week)','Daily']},
+  {id:'dl2',text:'How confident are you in interpreting statistical information (percentages, probabilities) in news or reports?',
+   opts:['Not at all confident','Slightly confident','Moderately confident','Very confident','Completely confident']},
+  {id:'dl3',text:'When you search for information online to help make a decision, how often do you find what you need?',
+   opts:['Never','Rarely','Sometimes','Often','Almost always']},
+  {id:'dl4',text:'How familiar are you with the term "expected value" in the context of probability and decision-making?',
+   opts:['Never heard of it','Heard of it but unsure','Somewhat familiar','Familiar','Very familiar — use it regularly']},
+  {id:'dl5',text:'How comfortable are you using AI chatbots (like ChatGPT) to solve problems involving numbers or calculations?',
+   opts:['Not comfortable at all','Slightly comfortable','Moderately comfortable','Very comfortable','Completely comfortable']},
+  {id:'dl6',text:'Have you ever used an AI tool specifically to help you make a financial or economic decision?',
+   opts:['Yes, frequently','Yes, occasionally','Yes, once or twice','No, but open to it','No, and prefer not to']},
+  {id:'dl7',text:'How much do you trust information provided by AI tools when making important decisions?',
+   opts:['Do not trust at all','Slightly','Moderately','Quite a bit','Completely trust']},
+  {id:'dl8',text:'If you needed to calculate the probability of two independent events both occurring, what would you do?',
+   opts:['Multiply the probabilities','Add the probabilities','Divide one by the other','Would not know','Look it up or ask AI']},
+  {id:'dl9',text:'How easy do you find it to learn new digital tools (apps, AI systems)?',
+   opts:['Very difficult','Difficult','Neutral','Easy','Very easy']},
+  {id:'dl10',text:'In the past month, how many different AI tools or apps have you used?',
+   opts:['0','1','2–3','4–5','More than 5']},
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RAVEN'S MATRICES (12 simplified symbolic items)
+// ═══════════════════════════════════════════════════════════════════════════
+const RAVEN_ITEMS = [
+  {q:[['●','●','●'],['●','●','●'],['●','●','?']],choices:['●','○','■','▲','◆','□'],ans:'●'},
+  {q:[['■','■■','■■■'],['●','●●','●●●'],['▲','▲▲','?']],choices:['▲','▲▲▲','▲▲','■■','●●','□□'],ans:'▲▲▲'},
+  {q:[['◆','○','■'],['■','◆','○'],['○','■','?']],choices:['○','◆','■','▲','□','●'],ans:'◆'},
+  {q:[['1','2','3'],['2','4','6'],['3','6','?']],choices:['7','8','9','10','12','6'],ans:'9'},
+  {q:[['A','B','C'],['D','E','F'],['G','H','?']],choices:['I','J','K','H','G','L'],ans:'I'},
+  {q:[['▲','▲▲','▲▲▲'],['○','○○','○○○'],['■','■■','?']],choices:['■','■■■','■■','▲▲','○○○','□□□'],ans:'■■■'},
+  {q:[['2','4','8'],['3','6','12'],['4','8','?']],choices:['12','14','16','10','20','24'],ans:'16'},
+  {q:[['◆◆','◆','◆◆'],['○○','○','○○'],['■■','■','?']],choices:['■','■■■','■■','○○','◆◆','□□'],ans:'■■'},
+  {q:[['Z','Y','X'],['C','B','A'],['M','L','?']],choices:['K','N','O','J','P','Q'],ans:'K'},
+  {q:[['●○','●○●','●○●○'],['■□','■□■','■□■□'],['▲△','▲△▲','?']],choices:['▲△▲△','▲▲','△△','▲△','▲△▲▲','△▲△'],ans:'▲△▲△'},
+  {q:[['1','3','9'],['2','6','18'],['3','9','?']],choices:['18','24','27','30','21','12'],ans:'27'},
+  {q:[['◆','■','●'],['■','●','◆'],['●','◆','?']],choices:['●','◆','■','▲','○','□'],ans:'■'},
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  HOLT-LAURY ROWS
+// ═══════════════════════════════════════════════════════════════════════════
+const HL_ROWS = [
+  {a:'₹200 for certain',b:'50% chance ₹300, 50% chance ₹100',evA:200,evB:200},
+  {a:'₹200 for certain',b:'50% chance ₹380, 50% chance ₹60',evA:200,evB:220},
+  {a:'₹200 for certain',b:'50% chance ₹460, 50% chance ₹20',evA:200,evB:240},
+  {a:'₹200 for certain',b:'50% chance ₹540, 50% chance ₹0',evA:200,evB:270},
+  {a:'₹200 for certain',b:'50% chance ₹640, 50% chance ₹0',evA:200,evB:320},
+  {a:'₹200 for certain',b:'50% chance ₹760, 50% chance ₹0',evA:200,evB:380},
+  {a:'₹200 for certain',b:'50% chance ₹900, 50% chance ₹0',evA:200,evB:450},
+  {a:'₹200 for certain',b:'50% chance ₹1,100, 50% chance ₹0',evA:200,evB:550},
+  {a:'₹200 for certain',b:'50% chance ₹1,400, 50% chance ₹0',evA:200,evB:700},
+  {a:'₹200 for certain',b:'50% chance ₹1,900, 50% chance ₹0',evA:200,evB:950},
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BATTERY A TASKS
+// ═══════════════════════════════════════════════════════════════════════════
+const BATTERY_A = [
+  {
+    code:'A1', label:'Certainty Effect — High Stakes', bias:'Certainty effect / risk aversion',
+    prompt:'Please choose ONE option:',
+    optA:{text:'Receive ₹400 for certain.',ev:'₹400 (certain)'},
+    optB:{text:'An 80% chance of receiving ₹600, and a 20% chance of receiving ₹0.',ev:'EV = ₹480'},
+    rational:'B',
+    payoffs:{A:{certain:400},B:{p:0.8,win:600,lose:0}},
+  },
+  {
+    code:'A2', label:'Common Ratio Effect', bias:'Probability weighting',
+    prompt:'Please choose ONE option:',
+    optA:{text:'A 25% chance of receiving ₹400, and a 75% chance of receiving ₹0.',ev:'EV = ₹100'},
+    optB:{text:'A 20% chance of receiving ₹600, and an 80% chance of receiving ₹0.',ev:'EV = ₹120'},
+    rational:'B',
+    payoffs:{A:{p:0.25,win:400,lose:0},B:{p:0.20,win:600,lose:0}},
+  },
+  {
+    code:'A3', label:'Probability Weighting — Equal EV', bias:'Risk preference (excluded from DQS)',
+    prompt:'Please choose ONE option:',
+    optA:{text:'A 90% chance of receiving ₹500, and a 10% chance of receiving ₹0.',ev:'EV = ₹450'},
+    optB:{text:'A 45% chance of receiving ₹1,000, and a 55% chance of receiving ₹0.',ev:'EV = ₹450'},
+    rational:'EITHER',  // excluded from DQS
+    payoffs:{A:{p:0.9,win:500,lose:0},B:{p:0.45,win:1000,lose:0}},
+    pcsItem: true,
+  },
+  {
+    code:'A4', label:'Loss Aversion — Reference Point', bias:'Loss aversion',
+    prompt:'You currently hold ₹500. Choose one option:',
+    optA:{text:'Keep ₹500 with certainty. Your final amount will be ₹500.',ev:'₹500 (certain)'},
+    optB:{text:'A 50% chance your total becomes ₹900, and a 50% chance your total becomes ₹300.',ev:'EV = ₹600'},
+    rational:'B',
+    payoffs:{A:{certain:500},B:{p:0.5,win:900,lose:300}},
+  },
+  {
+    code:'A5', label:'Framing Effect — GAIN Frame', bias:'Framing effect (gain)',
+    prompt:'A health programme is being considered. Without it, 600 people will fall seriously ill. Choose one programme:',
+    optA:{text:'Programme A: Exactly 200 people will be cured.',ev:'200 lives saved (certain)'},
+    optB:{text:'Programme B: A 1/3 probability all 600 are cured; a 2/3 probability nobody is cured.',ev:'EV = 200 lives saved'},
+    rational:'CONSISTENT', // rational = frame-consistent with A6
+    payoffs:{A:{certain:200},B:{p:1/3,win:600,lose:0}}, // monetary equivalent: 1 life = ₹2
+    pairWith:'A6',
+  },
+  {
+    code:'A6', label:'Framing Effect — LOSS Frame', bias:'Framing effect (loss)',
+    prompt:'The same health programme. Choose one programme:',
+    optA:{text:'Programme A: Exactly 400 people will NOT be cured (will remain ill).',ev:'400 remain ill (certain)'},
+    optB:{text:'Programme B: A 1/3 probability nobody remains ill; a 2/3 probability all 600 remain ill.',ev:'EV = 400 remain ill'},
+    rational:'CONSISTENT',
+    payoffs:{A:{certain:400},B:{p:1/3,win:0,lose:600}},
+    pairWith:'A5',
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BATTERY B TASKS
+// ═══════════════════════════════════════════════════════════════════════════
+const BATTERY_B = [
+  {
+    code:'B1', label:'Bayesian Updating — Base-Rate Neglect', bias:'Base-rate neglect',
+    prompt:'A disease affects 1 in 100 people (1%) in a large population. A test for the disease is 90% accurate: if you have the disease, the test is positive 90% of the time; if you do not have the disease, the test is positive 10% of the time. You take the test and receive a POSITIVE result. Please choose:',
+    optA:{text:'Pay ₹300 now for immediate treatment. (Treatment cures the disease if you have it, and is harmless if you do not.)',ev:'Cost: ₹300 certain'},
+    optB:{text:'Pay ₹0 now and accept the risk of the disease going untreated.',ev:'Risk: ~8.3% chance of untreated disease'},
+    rational:'A', // Correct Bayesian P(disease|positive) ≈ 8.3%
+    hasProbEstimate: true,
+    payoffs:{A:{certain:-300},B:{p:0.083,win:0,lose:-10000}},
+    correctProb: 8.3,
+  },
+  {
+    code:'B2', label:'Compound Probability — Conjunction Fallacy', bias:'Conjunction fallacy',
+    prompt:'You are about to roll TWO fair six-sided dice. You win a cash prize if a specific event occurs. Choose which event you would prefer to bet on:',
+    optA:{text:'Event A: The sum of the two dice equals 7.',ev:'P(A) = 6/36 = 16.7%'},
+    optB:{text:'Event B: Both dice show an odd number AND their sum equals 7.',ev:'P(B) = 0% (odd+odd=even, cannot equal 7)'},
+    rational:'A',
+    payoffs:{A:{p:6/36,win:500,lose:0},B:{p:0,win:500,lose:0}},
+  },
+  {
+    code:'B3', label:'Multi-Attribute Dominance', bias:'Dominance violation',
+    prompt:'You have ₹10,000 to invest for one year. Choose one investment option:',
+    optA:{text:'Investment A: Expected return = ₹800 (8% gain). Probability of losing more than ₹2,000 = 5%.',ev:'Return: +8% | Downside risk: 5%'},
+    optB:{text:'Investment B: Expected return = ₹600 (6% gain). Probability of losing more than ₹2,000 = 12%.',ev:'Return: +6% | Downside risk: 12%'},
+    rational:'A',  // A dominates B on both attributes
+    payoffs:{A:{p:0.95,win:800,lose:-2000},B:{p:0.88,win:600,lose:-2000}},
+  },
+  {
+    code:'B4', label:'Probabilistic Insurance — Pre-Specified Null', bias:'Ambiguity aversion / insurance framing',
+    prompt:'You own an asset worth ₹10,000. There is a 1% probability it will be completely destroyed in the next year. Choose one insurance option:',
+    optA:{text:'Full insurance: Pay ₹150 per year. Probability of total loss = 0%.',ev:'Cost: ₹150 certain'},
+    optB:{text:'Probabilistic insurance: Pay ₹75 per year. Probability of total loss reduced to 0.5%.',ev:'Expected cost: ₹75 + 0.5%×₹10,000 = ₹125'},
+    rational:'B',  // EV(B) = ₹125 < ₹150 (saves ₹25)
+    payoffs:{A:{certain:-150},B:{p:0.005,win:-75,lose:-10075}},
+    preSpecNull: true,
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  ARM DESCRIPTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+const ARM_CONFIG = {
+  control:{
+    label:'Control — No Technology',
+    cls:'control',
+    icon:'🚫',
+    instructions:`<div class="info-box red">
+      <strong>CONTROL CONDITION:</strong> For all decision tasks, please rely only on your own thinking and reasoning.
+      All devices have been collected by the session administrator. Do not attempt to access any digital tools.
+      Work independently and silently.
+    </div>`,
+    reminder:'Control condition — no technology permitted.',
+    reminderCls:'control',
+  },
+  search:{
+    label:'Search-Aided',
+    cls:'search',
+    icon:'🔍',
+    instructions:`<div class="info-box" style="background:#FFFBEB;border-color:#F59E0B;color:#92400E">
+      <strong>SEARCH CONDITION:</strong> You may use <strong>Google Search, Wikipedia, or equivalent passive search tools</strong>
+      to help you think through the decision problems.<br><br>
+      <strong>⚠️ NOT permitted:</strong> ChatGPT, Gemini, Copilot, Claude, or any AI chat assistant. If you are unsure whether
+      a tool is allowed, raise your hand and ask the administrator.
+    </div>`,
+    reminder:'Search-aided condition — Google/Wikipedia permitted. No AI chatbots.',
+    reminderCls:'search',
+  },
+  genai:{
+    label:'Generative AI-Aided',
+    cls:'genai',
+    icon:'🤖',
+    instructions:`<div class="info-box green">
+      <strong>GENAI CONDITION:</strong> You may use <strong>any AI tool you find helpful</strong> — including ChatGPT (GPT-4o),
+      Google Gemini, Anthropic Claude, Microsoft Copilot, or any other AI assistant. Passive search tools are also permitted.<br><br>
+      At the end of the session, you will be asked to briefly describe how you used the AI tool for each question.
+      Feel free to use it as much or as little as you like — the choice is entirely yours.
+    </div>`,
+    reminder:'GenAI condition — all AI tools permitted.',
+    reminderCls:'genai',
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sidePID').textContent = S.pid;
+  buildSidePhases();
+  buildATItems();
+  buildDLItems();
+  buildRavenItems();
+  buildHLTable();
+  buildBatteryA();
+  buildBatteryB();
+  buildLikertPts('pr2-pts','pr2',7);
+  buildLikertPts('pr3-pts','pr3',7);
+  buildLikertPts('aql-helpful-pts','aql_helpful',7);
+  buildLikertPts('aql-follow-pts','aql_follow',7);
+  assignArm();
+});
+
+function assignArm(){
+  const arms = ['control','search','genai'];
+  S.arm = arms[Math.floor(Math.random()*3)];
+  const cfg = ARM_CONFIG[S.arm];
+  // Sidebar
+  const ab = document.getElementById('sideArm');
+  ab.textContent = cfg.label;
+  ab.className = 'arm-badge arm-'+S.arm;
+  // Arm assignment page
+  document.getElementById('armInstructions').innerHTML =
+    `<div class="card"><div class="section-title">Your Assigned Condition</div>
+     <div class="arm-notice ${S.arm}"><span class="arm-icon">${cfg.icon}</span>${cfg.label}</div>
+     ${cfg.instructions}</div>`;
+  // Reminders in batteries
+  ['armReminderA','armReminderB'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.className = 'arm-notice '+S.arm;
+    el.innerHTML = `<span class="arm-icon">${cfg.icon}</span>${cfg.reminder}`;
+  });
+  // AQL section
+  if(S.arm==='genai'){
+    document.getElementById('aqlSection').style.display='block';
+    buildAQLItems();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SIDEBAR PHASES
+// ═══════════════════════════════════════════════════════════════════════════
+function buildSidePhases(){
+  const c = document.getElementById('sidePhases');
+  PHASES.forEach((name,i)=>{
+    const d = document.createElement('div');
+    d.className = 'phase-dot'+(i===0?' active':'');
+    d.id = 'sdot'+i;
+    d.innerHTML = `<span class="dot"></span><span>${name}</span>`;
+    c.appendChild(d);
+  });
+}
+function updateSidebar(){
+  PHASES.forEach((_,i)=>{
+    const d = document.getElementById('sdot'+i);
+    if(!d) return;
+    d.className = 'phase-dot'+(i<S.phase?' done':i===S.phase?' active':'');
+  });
+  document.getElementById('topPhaseLabel').textContent =
+    `Phase ${S.phase+1} of ${PHASES.length}`;
+  // DQS
+  const dqs = calcDQS();
+  document.getElementById('sideDQS').textContent = dqs+' / 8';
+  document.getElementById('sideDQSBar').style.width = (dqs/8*100)+'%';
+  S.dqs = dqs;
+  // Payout estimate
+  updatePayoutEstimate();
+}
+
+function updatePayoutEstimate(){
+  let evA = 0, evB = 0;
+  BATTERY_A.forEach(t=>{
+    const ch = S.batA['choice_'+t.code];
+    if(!ch) return;
+    const py = t.payoffs[ch];
+    if(py.certain !== undefined) evA += py.certain;
+    else evA += py.p*py.win + (1-py.p)*py.lose;
+  });
+  if(BATTERY_A.length) evA = Math.round(evA/BATTERY_A.length);
+  BATTERY_B.forEach(t=>{
+    const ch = S.batB['choice_'+t.code];
+    if(!ch) return;
+    const py = t.payoffs[ch];
+    if(py.certain !== undefined) evB += py.certain;
+    else evB += py.p*py.win + (1-py.p)*py.lose;
+  });
+  if(BATTERY_B.length) evB = Math.round(evB/BATTERY_B.length);
+  document.getElementById('sidePayA').textContent = evA ? '₹'+evA : '₹—';
+  document.getElementById('sidePayB').textContent = evB ? '₹'+evB : '₹—';
+  const total = 200 + Math.max(0,evA) + Math.max(0,evB);
+  document.getElementById('sidePayTotal').textContent = '₹'+total;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PHASE NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+function goPhase(n){
+  document.querySelector('#phase'+S.phase).classList.remove('active');
+  S.phase = n;
+  const next = document.querySelector('#phase'+n);
+  next.classList.add('active');
+  next.scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('mainContent').scrollTop = 0;
+  updateSidebar();
+  // Special actions on entering phases
+  if(n===3) startRavenTimer();
+  if(n===9) setTimeout(runPayoff, 600);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  VALIDATION ROUTER
+// ═══════════════════════════════════════════════════════════════════════════
+function validateAndGo(from, to){
+  const validators = {1:val1,2:val2,3:val3,4:val4,6:val6,7:val7,8:val8};
+  if(validators[from] && !validators[from]()) return;
+  goPhase(to);
+}
+
+function showValNote(id){ document.getElementById('val'+id).style.display='block'; }
+function hideValNote(id){ document.getElementById('val'+id).style.display='none'; }
+
+function val1(){
+  const fields = ['f-age','f-gender','f-edu','f-income','f-phone','f-aiuse'];
+  const ids    = ['d-age','d-gender','d-edu','d-income','d-phone','d-aiuse'];
+  let ok = true;
+  fields.forEach((f,i)=>{
+    const v = document.getElementById(ids[i]).value;
+    if(!v){document.getElementById(f).classList.add('has-error');ok=false;}
+    else document.getElementById(f).classList.remove('has-error');
+  });
+  if(!ok) showValNote(1); else hideValNote(1);
+  return ok;
+}
+
+function val2(){
+  let ok = true;
+  // AT items
+  AT_ITEMS.forEach(it=>{
+    if(!S.atResponses[it.id]){ok=false;}
+  });
+  // DL items
+  DL_ITEMS.forEach(it=>{
+    if(!S.dlResponses[it.id]){ok=false;}
+  });
+  // Numeracy
+  ['n-n1','n-n2','n-n3','n-n4'].forEach((id,i)=>{
+    const fid='f-n'+(i+1);
+    const v = document.getElementById(id).value;
+    if(!v){document.getElementById(fid).classList.add('has-error');ok=false;}
+    else document.getElementById(fid).classList.remove('has-error');
+  });
+  if(!ok) showValNote(2); else hideValNote(2);
+  return ok;
+}
+
+function val3(){
+  let ok = true;
+  RAVEN_ITEMS.forEach((_,i)=>{
+    if(!S.ravenResponses['r'+i]) ok=false;
+  });
+  if(!ok) showValNote(3); else hideValNote(3);
+  return ok;
+}
+
+function val4(){
+  let ok = HL_ROWS.every((_,i)=>S.hlChoices['hl'+i]);
+  if(!ok) showValNote(4); else hideValNote(4);
+  return ok;
+}
+
+function val6(){
+  let ok = true;
+  BATTERY_A.forEach(t=>{
+    if(!S.batA['choice_'+t.code]) ok=false;
+    if(!S.batA['conf_'+t.code]) ok=false;
+  });
+  if(!ok) showValNote(6); else hideValNote(6);
+  return ok;
+}
+
+function val7(){
+  let ok = true;
+  BATTERY_B.forEach(t=>{
+    if(!S.batB['choice_'+t.code]) ok=false;
+    if(!S.batB['conf_'+t.code]) ok=false;
+    if(t.hasProbEstimate && !S.batB['prob_'+t.code]) ok=false;
+  });
+  if(!ok) showValNote(7); else hideValNote(7);
+  return ok;
+}
+
+function val8(){
+  let ok = true;
+  if(!document.querySelector('input[name="pr1"]:checked')){
+    document.getElementById('f-pr1').classList.add('has-error');ok=false;
+  } else document.getElementById('f-pr1').classList.remove('has-error');
+  ['hc1','hc2','hc3'].forEach(n=>{
+    const fid='f-'+n;
+    if(!document.querySelector('input[name="'+n+'"]:checked')){
+      document.getElementById(fid).classList.add('has-error');ok=false;
+    } else document.getElementById(fid).classList.remove('has-error');
+  });
+  if(!ok) showValNote(8); else hideValNote(8);
+  return ok;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONSENT
+// ═══════════════════════════════════════════════════════════════════════════
+function handleConsent(val){
+  document.getElementById('consentYes').classList.toggle('selected',val==='yes');
+  document.getElementById('consentNo').classList.toggle('selected',val==='no');
+  document.getElementById('btn0').disabled = (val!=='yes');
+  if(val==='no'){
+    document.getElementById('btn0').textContent = 'You have chosen not to participate.';
+    document.getElementById('btn0').disabled = true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD AT ITEMS
+// ═══════════════════════════════════════════════════════════════════════════
+function buildATItems(){
+  const c = document.getElementById('atItems');
+  AT_ITEMS.forEach(it=>{
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.innerHTML = `
+      <label class="field-label">${it.text}${it.rev?' <span class="tag" style="background:#FEF3C7;color:#92400E">Reversed</span>':''} <span class="required">*</span></label>
+      <div class="likert">
+        <div class="likert-labels"><span>Strongly disagree</span><span>Strongly agree</span></div>
+        <div class="likert-points" id="${it.id}-pts"></div>
+      </div>`;
+    c.appendChild(div);
+    buildLikertPts(it.id+'-pts', it.id, 7, (id,v)=>{
+      S.atResponses[id] = it.rev ? 8-v : v;
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD DL ITEMS
+// ═══════════════════════════════════════════════════════════════════════════
+function buildDLItems(){
+  const c = document.getElementById('dlItems');
+  DL_ITEMS.forEach(it=>{
+    const div = document.createElement('div');
+    div.className = 'field';
+    const optsHtml = it.opts.map((o,i)=>
+      `<label class="radio-item" id="${it.id}-opt${i}">
+        <input type="radio" name="${it.id}" value="${i+1}" onchange="selectRadio('${it.id}-group-hidden',this);S.dlResponses['${it.id}']=${i+1};document.querySelectorAll('[id^=${it.id}-opt]').forEach(e=>e.classList.remove('selected'));this.closest('label').classList.add('selected')">
+        ${o}
+      </label>`).join('');
+    div.innerHTML = `<label class="field-label">${it.text} <span class="required">*</span></label>
+      <div class="radio-group">${optsHtml}</div>`;
+    c.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD RAVEN'S ITEMS
+// ═══════════════════════════════════════════════════════════════════════════
+function buildRavenItems(){
+  const c = document.getElementById('ravenItems');
+  RAVEN_ITEMS.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className = 'card card-sm';
+    const gridHtml = item.q.map(row=>
+      row.map(cell=>
+        `<div class="raven-cell${cell==='?'?' missing':''}">${cell}</div>`
+      ).join('')
+    ).join('');
+    const choicesHtml = item.choices.map((ch,ci)=>
+      `<div class="raven-choice" id="rc${i}_${ci}" onclick="selectRaven(${i},${ci},'${ch}')">
+        ${ch}
+      </div>`
+    ).join('');
+    div.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
+        <div>
+          <div class="field-label mb-2">Item ${i+1}</div>
+          <div class="raven-grid" style="grid-template-columns:repeat(${item.q[0].length},48px)">${gridHtml}</div>
+        </div>
+        <div>
+          <div class="field-label mb-2">Select the missing piece:</div>
+          <div class="raven-choices">${choicesHtml}</div>
+        </div>
+      </div>`;
+    c.appendChild(div);
+  });
+}
+function selectRaven(itemIdx, choiceIdx, val){
+  const item = RAVEN_ITEMS[itemIdx];
+  for(let ci=0;ci<item.choices.length;ci++){
+    document.getElementById(`rc${itemIdx}_${ci}`).classList.remove('selected');
+  }
+  document.getElementById(`rc${itemIdx}_${choiceIdx}`).classList.add('selected');
+  S.ravenResponses['r'+itemIdx] = val;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RAVEN TIMER
+// ═══════════════════════════════════════════════════════════════════════════
+function startRavenTimer(){
+  if(S.ravenTimer) return;
+  S.ravenSec = 600;
+  S.ravenTimer = setInterval(()=>{
+    S.ravenSec--;
+    const m = Math.floor(S.ravenSec/60);
+    const s = S.ravenSec%60;
+    const el = document.getElementById('ravenTimer');
+    if(el) el.textContent = m+':'+(s<10?'0':'')+s;
+    if(S.ravenSec<=0){
+      clearInterval(S.ravenTimer);
+      goPhase(4);
+    }
+  },1000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD HOLT-LAURY TABLE
+// ═══════════════════════════════════════════════════════════════════════════
+function buildHLTable(){
+  const tbody = document.getElementById('hlBody');
+  HL_ROWS.forEach((row,i)=>{
+    const tr = document.createElement('tr');
+    tr.id = 'hlrow'+i;
+    tr.innerHTML = `
+      <td style="font-weight:600;color:var(--navy)">${i+1}</td>
+      <td><label class="hl-option"><input type="radio" name="hl${i}" value="A" onchange="hlSelect(${i},'A')"> ${row.a}</label></td>
+      <td><label class="hl-option"><input type="radio" name="hl${i}" value="B" onchange="hlSelect(${i},'B')"> ${row.b}</label></td>
+      <td style="text-align:center;color:var(--gray-400)" id="hlsel${i}">—</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function hlSelect(i,val){
+  S.hlChoices['hl'+i] = val;
+  document.getElementById('hlsel'+i).textContent = val;
+  document.getElementById('hlsel'+i).style.color = val==='A'?'var(--navy)':'var(--teal)';
+  document.getElementById('hlrow'+i).classList.toggle('switched', val==='B');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD BATTERY A
+// ═══════════════════════════════════════════════════════════════════════════
+function buildBatteryA(){
+  const c = document.getElementById('batteryA');
+  BATTERY_A.forEach(task=>{
+    c.appendChild(buildGambleCard(task,'batA'));
+  });
+}
+function buildBatteryB(){
+  const c = document.getElementById('batteryB');
+  BATTERY_B.forEach(task=>{
+    c.appendChild(buildGambleCard(task,'batB'));
+    // B1 probability estimate
+    if(task.hasProbEstimate){
+      const div = document.createElement('div');
+      div.className = 'card card-sm';
+      div.style.marginTop='-12px';
+      div.innerHTML = `<div class="field">
+        <label class="field-label">Before choosing, estimate: Given that your test was POSITIVE, what is the probability (%) that you actually have the disease? <span class="required">*</span></label>
+        <input type="number" id="b1-prob" placeholder="Enter percentage 0–100" min="0" max="100"
+          onchange="S.batB['prob_B1']=this.value">
+        <div class="field-note">Correct Bayesian answer ≈ 8.3% — but enter what you genuinely believe.</div>
+      </div>`;
+      c.appendChild(div);
+    }
+  });
+}
+
+function buildGambleCard(task, store){
+  const div = document.createElement('div');
+  div.className = 'gamble-card';
+  let noteHtml = '';
+  if(task.preSpecNull) noteHtml = '<div class="info-box" style="margin:0 20px 12px;font-size:12px"><strong>Note (model prediction):</strong> This task is theoretically expected to show an attenuated treatment effect due to ambiguity aversion in the insurance domain.</div>';
+  if(task.pcsItem) noteHtml = '<div class="info-box" style="margin:0 20px 12px;font-size:12px"><strong>Note:</strong> This task has equal expected values. It measures risk preferences and probability calibration, not expected-value maximization.</div>';
+  if(task.pairWith) noteHtml = '<div class="info-box navy" style="margin:0 20px 12px;font-size:12px"><strong>Note:</strong> This is the '+task.label.split('—')[0].trim()+' version. Your answer will be compared with the paired task for frame-consistency scoring.</div>';
+
+  div.innerHTML = `
+    <div class="gamble-header">
+      <span class="gamble-code">${task.code} — ${task.label}</span>
+      <span class="gamble-type">${task.bias}</span>
+    </div>
+    <div class="gamble-body">
+      <p class="gamble-prompt">${task.prompt}</p>
+      ${noteHtml}
+      <div class="gamble-options">
+        <button class="gamble-opt" id="${task.code}-A" onclick="selectGamble('${task.code}','A','${store}')">
+          <div class="opt-label">Option A</div>
+          <div class="opt-text">${task.optA.text}</div>
+          <div class="opt-ev">${task.optA.ev}</div>
+        </button>
+        <button class="gamble-opt" id="${task.code}-B" onclick="selectGamble('${task.code}','B','${store}')">
+          <div class="opt-label">Option B</div>
+          <div class="opt-text">${task.optB.text}</div>
+          <div class="opt-ev">${task.optB.ev}</div>
+        </button>
+      </div>
+    </div>
+    <div class="gamble-confidence">
+      <div class="confidence-label">How confident are you in this choice? (1 = Completely uncertain, 7 = Completely certain)</div>
+      <div class="likert" style="margin-top:8px">
+        <div class="likert-labels"><span>Completely uncertain</span><span>Completely certain</span></div>
+        <div class="likert-points" id="${task.code}-conf-pts"></div>
+      </div>
+    </div>`;
+  // build confidence likert after DOM append (via setTimeout)
+  setTimeout(()=>{
+    buildLikertPts(task.code+'-conf-pts', task.code+'_conf', 7, (id,v)=>{
+      S[store]['conf_'+task.code] = v;
+    });
+  },0);
+  return div;
+}
+
+function selectGamble(code, opt, store){
+  ['A','B'].forEach(o=>{
+    const el = document.getElementById(code+'-'+o);
+    if(el) el.classList.remove('selected','selected-b');
+  });
+  const el = document.getElementById(code+'-'+opt);
+  if(el) el.classList.add(opt==='A'?'selected':'selected-b');
+  S[store]['choice_'+code] = opt;
+  updateSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD AQL ITEMS (GenAI arm only)
+// ═══════════════════════════════════════════════════════════════════════════
+function buildAQLItems(){
+  const tasks = [...BATTERY_A,...BATTERY_B];
+  const c = document.getElementById('aqlItems');
+  tasks.forEach(t=>{
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.innerHTML = `<label class="field-label">${t.code} — ${t.label.split('—')[0].trim()}</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <textarea id="aql-q-${t.code}" placeholder="What I asked the AI:" rows="2" onchange="S.pr['aql_q_${t.code}']=this.value"></textarea>
+        <textarea id="aql-r-${t.code}" placeholder="What it told me:" rows="2" onchange="S.pr['aql_r_${t.code}']=this.value"></textarea>
+      </div>`;
+    c.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  LIKERT BUILDER
+// ═══════════════════════════════════════════════════════════════════════════
+function buildLikertPts(containerId, storeKey, n, callback){
+  const c = document.getElementById(containerId);
+  if(!c) return;
+  for(let v=1;v<=n;v++){
+    const btn = document.createElement('button');
+    btn.type='button';
+    btn.className='likert-btn';
+    btn.textContent = v;
+    btn.onclick = function(){
+      c.querySelectorAll('.likert-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      if(callback) callback(storeKey,v);
+      else {
+        // default storage
+        const storeObj = storeKey.startsWith('pr') || storeKey.startsWith('aql') ? S.pr :
+                         storeKey.startsWith('at') ? S.atResponses : null;
+        if(storeObj) storeObj[storeKey] = v;
+      }
+    };
+    c.appendChild(btn);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RADIO SELECT HELPER
+// ═══════════════════════════════════════════════════════════════════════════
+function selectRadio(groupId, input){
+  // highlight selected
+  const grp = input.closest('.radio-group');
+  if(grp) grp.querySelectorAll('.radio-item').forEach(li=>li.classList.remove('selected'));
+  const li = input.closest('.radio-item');
+  if(li) li.classList.add('selected');
+}
+
+function checkField(fieldId, inputId){
+  const v = document.getElementById(inputId).value;
+  const f = document.getElementById(fieldId);
+  if(!v) f.classList.add('has-error'); else f.classList.remove('has-error');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DQS CALCULATION
+// ═══════════════════════════════════════════════════════════════════════════
+function calcDQS(){
+  let score = 0;
+  BATTERY_A.forEach(t=>{
+    const ch = S.batA['choice_'+t.code];
+    if(!ch) return;
+    if(t.code==='A3') return; // excluded
+    if(t.code==='A5'||t.code==='A6'){
+      // frame consistency counts as ONE joint point — handled below
+      return;
+    }
+    if(t.rational===ch) score++;
+  });
+  // A5+A6 frame consistency
+  const a5 = S.batA['choice_A5'], a6 = S.batA['choice_A6'];
+  if(a5 && a6 && a5===a6) score++;
+  // Battery B
+  BATTERY_B.forEach(t=>{
+    const ch = S.batB['choice_'+t.code];
+    if(!ch) return;
+    if(t.code==='B1'){
+      // DQS for B1 uses probability estimate < 50%
+      const prob = parseFloat(S.batB['prob_B1']);
+      if(!isNaN(prob) && prob < 50) score++;
+    } else if(t.rational===ch) score++;
+  });
+  return score;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PAYOFF CALCULATION
+// ═══════════════════════════════════════════════════════════════════════════
+function runPayoff(){
+  // Draw random tasks
+  const aEligible = BATTERY_A.filter(t=>t.code!=='A5'); // A5/A6 merged → pick one
+  const aIdx = Math.floor(Math.random()*aEligible.length);
+  const bIdx = Math.floor(Math.random()*BATTERY_B.length);
+  const taskA = aEligible[aIdx];
+  const taskB = BATTERY_B[bIdx];
+
+  function resolveOutcome(task, store){
+    const ch = store['choice_'+task.code];
+    if(!ch) return 0;
+    const py = task.payoffs[ch];
+    if(py.certain !== undefined) return py.certain;
+    const roll = Math.random();
+    return roll < py.p ? py.win : py.lose;
+  }
+
+  const outA = resolveOutcome(taskA, S.batA);
+  const outB = resolveOutcome(taskB, S.batB);
+  const totalPay = 200 + Math.max(0,outA) + Math.max(0,outB);
+
+  setTimeout(()=>{
+    document.getElementById('payoffDraw').style.display = 'none';
+    document.getElementById('payoffResults').style.display = 'block';
+
+    document.getElementById('payoffTaskA').innerHTML = `
+      <div class="payoff-task-label">Battery A — Selected Task: ${taskA.code} (${taskA.label.split('—')[0].trim()})</div>
+      <div>Your choice: <strong>Option ${S.batA['choice_'+taskA.code]||'—'}</strong></div>
+      <div class="payoff-task-outcome">Outcome: ₹${Math.max(0,outA)}</div>`;
+    document.getElementById('payoffTaskB').innerHTML = `
+      <div class="payoff-task-label">Battery B — Selected Task: ${taskB.code} (${taskB.label.split('—')[0].trim()})</div>
+      <div>Your choice: <strong>Option ${S.batB['choice_'+taskB.code]||'—'}</strong></div>
+      <div class="payoff-task-outcome">Outcome: ₹${Math.max(0,outB)}</div>`;
+    document.getElementById('payoffTotal').textContent = '₹'+totalPay;
+
+    // DQS summary
+    const dqs = calcDQS();
+    document.getElementById('finalDQS').textContent = dqs;
+    document.getElementById('finalDQSBar').style.width = (dqs/8*100)+'%';
+    const msgs = [
+      'This session provides baseline data for our study.',
+      'A few tasks aligned with expected utility maximization.',
+      'Some tasks aligned — informational support can help further.',
+      'Solid performance — around the expected range.',
+      'Good performance across most tasks.',
+      'Strong performance — you maximized expected value on most tasks.',
+      'Very strong performance.',
+      'Excellent — nearly all choices aligned with expected utility maximization.',
+      'Perfect score — all choices were expected-value maximizing.'
+    ];
+    document.getElementById('dqsMessage').textContent = msgs[Math.min(dqs,8)];
+    document.getElementById('dqsSummary').style.display = 'block';
+    document.getElementById('debriefCard').style.display = 'block';
+    document.getElementById('finalBtns').style.display = 'flex';
+    updateSidebar();
+  }, 2000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DATA EXPORT
+// ═══════════════════════════════════════════════════════════════════════════
+function downloadData(){
+  const data = {
+    meta:{
+      pid: S.pid,
+      arm: S.arm,
+      dqs: calcDQS(),
+      duration_sec: Math.round((Date.now()-S.startTime)/1000),
+      timestamp: new Date().toISOString(),
+    },
+    demographics:{
+      age: document.getElementById('d-age')?.value,
+      gender: document.getElementById('d-gender')?.value,
+      education: document.getElementById('d-edu')?.value,
+      income: document.getElementById('d-income')?.value,
+      smartphone_years: document.getElementById('d-phone')?.value,
+      daily_ai_use: document.getElementById('d-aiuse')?.value,
+    },
+    algorithm_trust: S.atResponses,
+    lambda_score: Object.keys(S.atResponses).length===8 ?
+      (Object.values(S.atResponses).reduce((a,b)=>a+b,0)/56).toFixed(3) : null,
+    numeracy:{
+      n1: document.getElementById('n-n1')?.value,
+      n2: document.getElementById('n-n2')?.value,
+      n3: document.getElementById('n-n3')?.value,
+      n4: document.getElementById('n-n4')?.value,
+      score_n1: Math.abs(parseFloat(document.getElementById('n-n1')?.value)-20)<=1?1:0,
+      score_n2: Math.abs(parseFloat(document.getElementById('n-n2')?.value)-25)<=2?1:0,
+      score_n3: Math.abs(parseFloat(document.getElementById('n-n3')?.value)-3.5)<=0.5?1:0,
+      score_n4: Math.abs(parseFloat(document.getElementById('n-n4')?.value)-4)<=0.5?1:0,
+    },
+    digital_literacy: S.dlResponses,
+    raven_matrices:{
+      responses: S.ravenResponses,
+      score: RAVEN_ITEMS.reduce((acc,it,i)=>acc+(S.ravenResponses['r'+i]===it.ans?1:0),0),
+    },
+    holt_laury:{
+      choices: S.hlChoices,
+      switch_row: (()=>{
+        for(let i=0;i<HL_ROWS.length;i++) if(S.hlChoices['hl'+i]==='B') return i+1;
+        return null;
+      })(),
+    },
+    battery_a: S.batA,
+    battery_b: S.batB,
+    dqs_by_task:{
+      A1: S.batA.choice_A1==='B'?1:0,
+      A2: S.batA.choice_A2==='B'?1:0,
+      A3: 'excluded',
+      A4: S.batA.choice_A4==='B'?1:0,
+      A5A6_frame_consistent: S.batA.choice_A5&&S.batA.choice_A6&&S.batA.choice_A5===S.batA.choice_A6?1:0,
+      B1: (!isNaN(parseFloat(S.batB.prob_B1))&&parseFloat(S.batB.prob_B1)<50)?1:0,
+      B2: S.batB.choice_B2==='A'?1:0,
+      B3: S.batB.choice_B3==='A'?1:0,
+      B4: S.batB.choice_B4==='B'?1:0,
+    },
+    process_measures: S.pr,
+    compliance:{
+      communicated: document.querySelector('input[name="hc1"]:checked')?.value,
+      followed_instructions: document.querySelector('input[name="hc2"]:checked')?.value,
+      tech_used: document.querySelector('input[name="hc3"]:checked')?.value,
+    },
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `AidedRationality_${S.pid}_${S.arm}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
