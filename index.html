@@ -29,7 +29,7 @@ html{font-family:var(--font-ui);color:var(--gray-800);background:var(--gray-50);
 body{min-height:100vh;display:flex;flex-direction:column}
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */
-.app{display:grid;grid-template-columns:1fr 280px;grid-template-rows:56px 1fr;min-height:100vh;max-width:1200px;margin:0 auto;gap:0}
+.app{display:grid;grid-template-columns:1fr 220px;grid-template-rows:56px 1fr;min-height:100vh;max-width:1400px;margin:0 auto;gap:0}
 .topbar{grid-column:1/-1;background:var(--navy);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:100}
 .topbar-logo{font-size:13px;font-weight:600;color:var(--white);letter-spacing:.04em}
 .topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.2)}
@@ -37,7 +37,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
 .topbar-phase{font-size:11px;font-weight:500;color:var(--teal-lt);background:rgba(15,118,110,.2);padding:3px 10px;border-radius:20px}
 
 /* ── Sidebar panel ────────────────────────────────────────────────────────── */
-.sidebar{background:var(--navy);padding:20px 16px;display:flex;flex-direction:column;gap:16px;border-left:1px solid rgba(255,255,255,.08)}
+.sidebar{background:var(--navy);padding:16px 12px;display:flex;flex-direction:column;gap:12px;border-left:1px solid rgba(255,255,255,.08);font-size:12px}
 .sidebar-section{background:rgba(255,255,255,.06);border-radius:var(--radius);padding:12px 14px}
 .sidebar-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px}
 .arm-badge{font-size:13px;font-weight:600;color:var(--white);padding:6px 12px;border-radius:6px;text-align:center;background:var(--navy-mid)}
@@ -64,7 +64,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
 .payout-total{display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:var(--teal-lt);padding-top:8px;border-top:1px solid rgba(255,255,255,.1);margin-top:6px}
 
 /* ── Main content ─────────────────────────────────────────────────────────── */
-.main{padding:32px 32px 60px;overflow-y:auto;background:var(--gray-50)}
+.main{padding:32px 48px 60px;overflow-y:auto;background:var(--gray-50);min-width:0}
 
 .phase{display:none;animation:fadeIn .3s ease}
 .phase.active{display:block}
@@ -73,7 +73,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
 /* ── Typography ───────────────────────────────────────────────────────────── */
 .page-eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
 .page-title{font-size:26px;font-weight:600;color:var(--navy);line-height:1.25;margin-bottom:6px}
-.page-sub{font-size:14px;color:var(--gray-600);line-height:1.6;margin-bottom:28px;max-width:600px}
+.page-sub{font-size:14px;color:var(--gray-600);line-height:1.6;margin-bottom:28px;max-width:680px}
 .section-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--gray-200)}
 .field-label{font-size:13px;font-weight:500;color:var(--gray-800);margin-bottom:6px;display:block}
 .field-note{font-size:12px;color:var(--gray-400);margin-top:4px}
@@ -198,10 +198,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:3px}
 
-@media(max-width:768px){
+@media(max-width:900px){
   .app{grid-template-columns:1fr;grid-template-rows:56px 1fr}
   .sidebar{display:none}
-  .main{padding:20px 16px 40px}
+  .main{padding:20px 24px 40px}
   .gamble-options{grid-template-columns:1fr}
   .grid-2{grid-template-columns:1fr}
 }
